@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ai Là Triệu Phú</title>
+    <style>
+         :root {
+            --bg: #001133;
+            --primary: #0044cc;
+            --secondary: #0099ff;
+            --correct: #00cc66;
+            --wrong: #cc0000;
+            --text: #ffffff;
+            --muted: #bbbbbb;
+        }
+        
+        body {
+            margin: 0;
+            font-family: 'Orbitron', sans-serif;
+            background: radial-gradient(circle at center, #001122, #000);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .panel {
+            background: rgba(0, 0, 40, 0.85);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px #00ffff, 0 0 60px #0044ff inset;
+            border: 1px solid #00ffff;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 40px #00ffff, 0 0 80px #0044ff inset;
+        }
+        
+        .panel h1,
+        .panel h3 {
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+        
+        .question.glow {
+            animation: glow 0.8s infinite alternate;
+        }
+        
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 5px #00ffff;
+            }
+            50% {
+                text-shadow: 0 0 20px #00ffff;
+            }
+            100% {
+                text-shadow: 0 0 5px #00ffff;
+            }
+        }
+        
+        .answers {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .answer {
+            background: rgba(0, 68, 204, 0.8);
+            padding: 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: left;
+            box-shadow: 0 0 5px #00ffff;
+            color: #fff;
+        }
+        
+        .answer:hover {
+            background: rgba(0, 153, 255, 0.9);
+            box-shadow: 0 0 15px #00ffff, 0 0 30px #0099ff;
+        }
+        
+        .answer.highlight {
+            animation: highlightAnim 1.2s infinite alternate;
+        }
+        
+        @keyframes highlightAnim {
+            0% {
+                box-shadow: 0 0 5px #00ffff;
+            }
+            50% {
+                box-shadow: 0 0 15px #00ffff;
+            }
+            100% {
+                box-shadow: 0 0 5px #00ffff;
+            }
+        }
+        
+        .answer.correct {
+            background: #00ff66 !important;
+            box-shadow: 0 0 20px #00ff66, 0 0 40px #00ff66 inset !important;
+        }
+        
+        .answer.wrong {
+            background: #cc0000 !important;
+            box-shadow: 0 0 20px #cc0000, 0 0 40px #cc0000 inset !important;
+        }
+        
+        .lifeline {
+            background: #111;
+            padding: 12px 22px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 0 5px #00ffff;
+        }
+        
+        .lifeline:hover {
+            background: #0099ff;
+            box-shadow: 0 0 15px #00ffff, 0 0 30px #0099ff;
+        }
+        
+        .lifeline.used {
+            background: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        .prize-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .prize-list li {
+            background: #111;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 14px;
+            margin: 3px 0;
+            transition: 0.3s;
+            box-shadow: 0 0 5px #00ffff inset;
+        }
+        
+        .prize-list li.current {
+            background: #0099ff;
+            font-weight: bold;
+            box-shadow: 0 0 10px #00ffff, 0 0 20px #0099ff inset;
+        }
+        
+        @keyframes prizeFlash {
+            0% {
+                background: #0099ff;
+                color: #fff;
+            }
+            50% {
+                background: #00ffff;
+                color: #000;
+            }
+            100% {
+                background: #0099ff;
+                color: #fff;
+            }
+        }
+        
+        .prize-flash {
+            animation: prizeFlash 0.5s ease-in-out 3;
+        }
+        
+        .modal {
+            background: #111;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            color: #00ffff;
+            box-shadow: 0 0 30px #00ffff, 0 0 60px #0099ff inset;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap" style="display:grid;grid-template-columns:3fr 1fr;gap:20px;max-width:1100px;width:100%;">
+        <div class="panel game">
+            <h1>Ai Là Triệu Phú — 15 câu</h1>
+            <div class="question" id="question">---</div>
+            <div class="answers" id="answers">
+                <div class="answer" data-key="A"><strong>A.</strong> <span></span></div>
+                <div class="answer" data-key="B"><strong>B.</strong> <span></span></div>
+                <div class="answer" data-key="C"><strong>C.</strong> <span></span></div>
+                <div class="answer" data-key="D"><strong>D.</strong> <span></span></div>
+            </div>
+            <div class="lifelines">
+                <div class="lifeline" id="lifeline-50">50:50</div>
+                <div class="lifeline" id="lifeline-audience">Gợi ý từ ban tổ chức</div>
+                <div class="lifeline" id="lifeline-phone">Gọi điện bạn ĐẠI</div>
+            </div>
+            <div class="controls">
+                <div style="margin-left:auto;color:var(--muted)">Câu <span id="qnum">0</span>/15</div>
+            </div>
+            <footer>Chọn đáp án đúng để tiến lên. Đáp án sai sẽ kết thúc trò chơi.</footer>
+        </div>
+
+        <div class="panel side">
+            <h3>Tiền thưởng</h3>
+            <ul class="prize-list" id="prizes"></ul>
+            <div style="flex:1"></div>
+            <div style="font-size:13px;color:var(--muted)">DEV BY NGQUANG ĐẠI</div>
+        </div>
+    </div>
+
+    <div id="modal" style="display:none" class="overlay">
+        <div class="modal" id="modal-content"></div>
+    </div>
+
+    <audio id="bg-music" src="bg-music.mp3" loop autoplay></audio>
+    <audio id="sound-correct" src="correct.mp3"></audio>
+    <audio id="sound-wrong" src="wrong.mp3"></audio>
+
+
+    <script>
+        // DATA & prizes
+        const DATA = [
+            // 🔥 Vật lý
+            {
+                q: "Tại sao khi đi xe máy nhanh, tóc lại bay ngược ra sau?",
+                A: "Vì gió đẩy về sau",
+                B: "Vì tóc tự bay",
+                C: "Vì không khí cản trở chuyển động",
+                D: "Vì ma sát",
+                correct: "C"
+            }, {
+                q: "Khi đặt viên đá vào ly nước, mực nước dâng lên. Khi đá tan, mực nước thế nào?",
+                A: "Tăng lên",
+                B: "Không đổi",
+                C: "Giảm xuống",
+                D: "Tràn ra ngoài",
+                correct: "B"
+            }, {
+                q: "Vật nào nhẹ hơn trong không khí: 1kg bông hay 1kg sắt?",
+                A: "1kg bông",
+                B: "1kg sắt",
+                C: "Bằng nhau",
+                D: "Không so sánh được",
+                correct: "C"
+            }, {
+                q: "Hiện tượng cầu vồng xuất hiện do nguyên nhân nào?",
+                A: "Phản xạ âm thanh",
+                B: "Khúc xạ và phản xạ ánh sáng",
+                C: "Mưa to",
+                D: "Gió mạnh",
+                correct: "B"
+            }, {
+                q: "Âm thanh truyền nhanh nhất trong môi trường nào?",
+                A: "Khí",
+                B: "Chân không",
+                C: "Rắn",
+                D: "Lỏng",
+                correct: "C"
+            },
+
+            // 💥 Hóa học
+            {
+                q: "Nguyên tố nào có tên nghe như đi chơi biển?",
+                A: "Oxi",
+                B: "Natri",
+                C: "Canxi",
+                D: "Kali",
+                correct: "B"
+            }, {
+                q: "Vì sao để lâu dầu ăn lại có mùi khó chịu?",
+                A: "Do bị bẩn",
+                B: "Do vi khuẩn phân hủy",
+                C: "Do chất béo bị oxi hóa",
+                D: "Do đông lại",
+                correct: "C"
+            }, {
+                q: "Chất nào vừa dùng để cứu người, vừa dùng để hàn xì, vừa để nướng thịt?",
+                A: "CO₂",
+                B: "Oxi (O₂)",
+                C: "Nitơ",
+                D: "Hidro",
+                correct: "B"
+            }, {
+                q: "Khí nào giúp bánh mì nở?",
+                A: "CO₂",
+                B: "Oxi",
+                C: "Hidro",
+                D: "Nitơ",
+                correct: "A"
+            }, {
+                q: "Dung dịch nào có tính axit?",
+                A: "Nước vôi trong",
+                B: "Nước đường",
+                C: "Nước chanh",
+                D: "Nước muối",
+                correct: "C"
+            },
+
+            // 🌱 Sinh học
+            {
+                q: "Vì sao người tập thể dục thì tim đập nhanh hơn?",
+                A: "Để giải phóng mồ hôi",
+                B: "Để bơm nhiều máu và oxi cho cơ thể",
+                C: "Để tăng thân nhiệt",
+                D: "Để giảm cân",
+                correct: "B"
+            }, {
+                q: "Con vật nào có tim to nhất trong thế giới động vật?",
+                A: "Cá mập",
+                B: "Ngựa",
+                C: "Cá voi xanh",
+                D: "Voi",
+                correct: "C"
+            }, {
+                q: "Vì sao khi chạy mệt, ta thở gấp?",
+                A: "Vì cơ thể cần nhiều oxi để tạo năng lượng",
+                B: "Vì mất nước",
+                C: "Vì nhiệt độ tăng",
+                D: "Vì máu giảm",
+                correct: "A"
+            }, {
+                q: "Bộ phận nào trong cơ thể người có chức năng lọc máu?",
+                A: "Phổi",
+                B: "Gan",
+                C: "Thận",
+                D: "Dạ dày",
+                correct: "C"
+            }, {
+                q: "Bộ phận nào của thực vật giúp hấp thụ nước và muối khoáng?",
+                A: "Rễ",
+                B: "Thân",
+                C: "Lá",
+                D: "Hoa",
+                correct: "A"
+            }
+        ];
+
+        const prizes = [1000, 2000, 5000, 10000, 20000, 40000, 80000, 160000, 320000, 640000, 1250000, 2500000, 5000000, 10000000, 20000000];
+        let idx = 0;
+        const used = {
+            "50": false,
+            audience: false,
+            phone: false
+        };
+        const qEl = document.getElementById('question');
+        const ansEls = Array.from(document.querySelectorAll('.answer'));
+        const qnum = document.getElementById('qnum');
+        const prizesEl = document.getElementById('prizes');
+        const bgMusic = document.getElementById('bg-music');
+        const soundCorrect = document.getElementById('sound-correct');
+        const soundWrong = document.getElementById('sound-wrong');
+        const beepSound = document.getElementById('beep-sound');
+
+        bgMusic.volume = 0.2;
+        bgMusic.play().catch(() => {});
+
+        function playSound(sound) {
+            sound.volume = 1;
+            sound.play();
+        }
+
+        function renderPrizes() {
+            prizesEl.innerHTML = '';
+            for (let i = prizes.length - 1; i >= 0; i--) {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>Câu ${i+1}</span><strong>${prizes[i].toLocaleString()} $</strong>`;
+                if (i === idx) li.classList.add('current');
+                prizesEl.appendChild(li);
+            }
+        }
+
+        function animatePrize(target) {
+            const li = prizesEl.querySelector('li.current strong');
+            let current = 0;
+            const interval = setInterval(() => {
+                if (current >= target) {
+                    li.textContent = target.toLocaleString() + ' $';
+                    clearInterval(interval);
+                } else {
+                    current += Math.ceil((target - current) / 5);
+                    li.textContent = current.toLocaleString() + ' $';
+                    beepSound.play().catch(() => {});
+                }
+            }, 120);
+            li.classList.add('prize-flash');
+            setTimeout(() => li.classList.remove('prize-flash'), 2000);
+        }
+
+        function flashNextPrize(nextIdx) {
+            if (nextIdx >= prizes.length) return;
+            const li = prizesEl.children[prizes.length - 1 - nextIdx];
+            li.classList.add('prize-flash');
+            setTimeout(() => li.classList.remove('prize-flash'), 1800);
+        }
+
+        function loadQuestion() {
+            const item = DATA[idx];
+            qEl.textContent = item.q;
+            qEl.classList.add('glow');
+            setTimeout(() => qEl.classList.remove('glow'), 2000);
+            ansEls.forEach(el => {
+                const key = el.getAttribute('data-key');
+                el.className = 'answer highlight';
+                el.dataset.disabled = false;
+                el.style.visibility = 'visible';
+                el.querySelector('span').textContent = item[key];
+            });
+            qnum.textContent = idx + 1;
+            flashNextPrize(idx);
+        }
+
+        function endGame(win = false) {
+            const modal = document.getElementById('modal');
+            const content = document.getElementById('modal-content');
+            modal.style.display = 'flex';
+            if (win) content.innerHTML = `<h2>Chúc mừng! Bạn đã chiến thắng ${prizes[prizes.length-1].toLocaleString()} VNĐ</h2>`;
+            else {
+                const item = DATA[idx];
+                content.innerHTML = `<h2>Bạn đã thua ở câu ${idx+1}!</h2><p>Đáp án đúng: <strong>${item.correct}. ${item[item.correct]}</strong></p>`;
+            }
+        }
+
+        ansEls.forEach(el => el.addEventListener('click', () => {
+            if (el.dataset.disabled === 'true') return;
+            const chosen = el.getAttribute('data-key');
+            const item = DATA[idx];
+            ansEls.forEach(a => a.dataset.disabled = 'true');
+            setTimeout(() => {
+                if (chosen === item.correct) {
+                    el.classList.add('correct');
+                    playSound(soundCorrect);
+                    animatePrize(prizes[idx]);
+                    setTimeout(() => {
+                        el.classList.remove('correct');
+                        idx++;
+                        if (idx >= DATA.length) endGame(true);
+                        else {
+                            renderPrizes();
+                            loadQuestion();
+                        }
+                    }, 2500);
+                } else {
+                    el.classList.add('wrong');
+                    playSound(soundWrong);
+                    ansEls.find(a => a.getAttribute('data-key') === item.correct).classList.add('correct');
+                    setTimeout(() => endGame(false), 2000);
+                }
+            }, 2000);
+        }));
+
+        document.getElementById('lifeline-50').addEventListener('click', () => {
+            if (used["50"]) return;
+            used["50"] = true;
+            document.getElementById('lifeline-50').classList.add('used');
+            const item = DATA[idx];
+            let wrongs = ansEls.filter(a => a.getAttribute('data-key') !== item.correct);
+            wrongs.sort(() => Math.random() - 0.5).slice(0, 2).forEach(el => el.style.visibility = 'hidden');
+        });
+
+        document.getElementById('lifeline-audience').addEventListener('click', () => {
+            if (used.audience) return;
+            used.audience = true;
+            document.getElementById('lifeline-audience').classList.add('used');
+            const item = DATA[idx];
+            alert("Ban tổ chức gợi ý: Đáp án đúng có khả năng cao là " + item.correct);
+        });
+
+        document.getElementById('lifeline-phone').addEventListener('click', () => {
+            if (used.phone) return;
+            used.phone = true;
+            document.getElementById('lifeline-phone').classList.add('used');
+            const item = DATA[idx];
+            alert("Bạn Đại gọi điện nói: 'Mình nghĩ đáp án là " + item.correct + ". " + item[item.correct] + "'");
+        });
+
+        renderPrizes();
+        loadQuestion();
+    </script>
+</body>
+
+</html>
