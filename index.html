@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Ai Là Triệu Phú</title>
+    <title>Ai Là Triệu Phú – Kẹo Edition</title>
     <style>
          :root {
             --bg: #001133;
@@ -215,14 +215,13 @@
             <div class="controls">
                 <div style="margin-left:auto;color:var(--muted)">Câu <span id="qnum">0</span>/15</div>
             </div>
-            <footer>Chọn đáp án đúng để tiến lên. Đáp án sai sẽ kết thúc trò chơi.</footer>
+            <footer>Chọn đáp án đúng để tiến lên. Đáp án sai sẽ kết thúc trò chơi. Mỗi 1 câu = 1 viên kẹo. Sai sẽ mất tất cả kẹo hiện bạn đang có.</footer>
         </div>
-
         <div class="panel side">
-            <h3>Tiền thưởng</h3>
+            <h3>Kẹo thưởng</h3>
             <ul class="prize-list" id="prizes"></ul>
             <div style="flex:1"></div>
-            <div style="font-size:13px;color:var(--muted)">DEV BY NGQUANG ĐẠI</div>
+            <div style="font-size:13px;color:var(--muted)">ngquangdai</div>
         </div>
     </div>
 
@@ -233,10 +232,10 @@
     <audio id="bg-music" src="bg-music.mp3" loop autoplay></audio>
     <audio id="sound-correct" src="correct.mp3"></audio>
     <audio id="sound-wrong" src="wrong.mp3"></audio>
-
+    <audio id="beep-sound" src="beep.mp3"></audio>
 
     <script>
-        // DATA & prizes
+        // DATA & Kẹo thưởng
         const DATA = [
             // 🔥 Vật lý
             {
@@ -275,7 +274,6 @@
                 D: "Lỏng",
                 correct: "C"
             },
-
             // 💥 Hóa học
             {
                 q: "Nguyên tố nào có tên nghe như đi chơi biển?",
@@ -313,7 +311,6 @@
                 D: "Nước muối",
                 correct: "C"
             },
-
             // 🌱 Sinh học
             {
                 q: "Vì sao người tập thể dục thì tim đập nhanh hơn?",
@@ -353,7 +350,12 @@
             }
         ];
 
-        const prizes = [1000, 2000, 5000, 10000, 20000, 40000, 80000, 160000, 320000, 640000, 1250000, 2500000, 5000000, 10000000, 20000000];
+        const prizes = [
+            "1 Viên Kẹo ", "2 Viên Kẹo", "3 Viên Kẹo", "4 Viên Kẹo", "5 Viên Kẹo",
+            "6 Viên Kẹo", "7 Viên Kẹo", "8 Viên Kẹo", "9 Viên Kẹo", "10 Viên Kẹo",
+            "11 Viên Kẹo", "12 Viên Kẹo", "13 Viên Kẹo", "14 Viên Kẹo", "15 Viên Kẹo"
+        ];
+
         let idx = 0;
         const used = {
             "50": false,
@@ -381,25 +383,14 @@
             prizesEl.innerHTML = '';
             for (let i = prizes.length - 1; i >= 0; i--) {
                 const li = document.createElement('li');
-                li.innerHTML = `<span>Câu ${i+1}</span><strong>${prizes[i].toLocaleString()} $</strong>`;
+                li.innerHTML = `<span>Câu ${i+1}</span><strong>${prizes[i]}</strong>`;
                 if (i === idx) li.classList.add('current');
                 prizesEl.appendChild(li);
             }
         }
 
         function animatePrize(target) {
-            const li = prizesEl.querySelector('li.current strong');
-            let current = 0;
-            const interval = setInterval(() => {
-                if (current >= target) {
-                    li.textContent = target.toLocaleString() + ' $';
-                    clearInterval(interval);
-                } else {
-                    current += Math.ceil((target - current) / 5);
-                    li.textContent = current.toLocaleString() + ' $';
-                    beepSound.play().catch(() => {});
-                }
-            }, 120);
+            const li = prizesEl.querySelector('li.current');
             li.classList.add('prize-flash');
             setTimeout(() => li.classList.remove('prize-flash'), 2000);
         }
@@ -431,7 +422,7 @@
             const modal = document.getElementById('modal');
             const content = document.getElementById('modal-content');
             modal.style.display = 'flex';
-            if (win) content.innerHTML = `<h2>Chúc mừng! Bạn đã chiến thắng ${prizes[prizes.length-1].toLocaleString()} VNĐ</h2>`;
+            if (win) content.innerHTML = `<h2>Chúc mừng! Bạn đã chiến thắng ${prizes[prizes.length-1]}</h2>`;
             else {
                 const item = DATA[idx];
                 content.innerHTML = `<h2>Bạn đã thua ở câu ${idx+1}!</h2><p>Đáp án đúng: <strong>${item.correct}. ${item[item.correct]}</strong></p>`;
